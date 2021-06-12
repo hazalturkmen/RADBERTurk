@@ -1,0 +1,17 @@
+{
+  "learning_rate": 0.001,
+
+  "num_sampels": 1000,
+  "csv_file_path": "data//outBIO.csv",
+  "vocab_word_path": "data//vocab_word.txt",
+  "vocab_char_path": "data//vocab_char.txt",
+  "wor2vec_file_path":"wvec models//wvec_model.wv",
+  "elmo_lm_path":"lm_models//turkish_elmo_lm", 
+  "batch_size": 16,
+  "num_epochs": 2,
+  "rnn_units":10, 
+  "embedding_size": 50,
+  "hidden_number": 50,
+  "tag_file_path": "data//tag_file.txt",
+  "exp_name": "style_swap"
+}
