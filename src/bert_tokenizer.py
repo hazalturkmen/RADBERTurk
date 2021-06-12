@@ -19,14 +19,14 @@ def get_report_from_xlsx(path):
 
 def tokenize(report, tokenizer):
     new_report = []
-    print("\nTokenizing report impressions. All reports are cut off at 512 tokens.")
+    print("\nTokenizing report text. All reports are cut off at 512 tokens.")
     for i in tqdm(range(report.shape[0])):
         tokenized_imp = tokenizer.tokenize(report.iloc[i])
         tokenized_imp_plus = ['[CLS]'] + tokenized_imp + ['[SEP]']
         if tokenized_imp_plus:
             res = tokenizer.convert_tokens_to_ids(tokenized_imp_plus)
-            if len(res) > 128:
-                res = res[:127] + [tokenizer.sep_token_id]
+            if len(res) > 512:
+                res = res[:511] + [tokenizer.sep_token_id]
             new_report.append(res)
         else:
             new_report.append([tokenizer.cls_token_id, tokenizer.sep_token_id])
