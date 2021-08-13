@@ -2,28 +2,23 @@ import argparse
 import torch
 import time
 import datetime
-
 from matplotlib import pyplot as plt
 from torch import cuda
 from transformers import BertTokenizer
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
-from pytorch.src.bert_layer import BERTClass
-from pytorch.src.data_utils import plot_confusion_matrix, load_data
-
+from bert_layer import BERTClass
+from data_utils import plot_confusion_matrix, load_data, write, plot_loss
 
 EPOCHS = 4
 LEARNING_RATE = 1e-05
-tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
-device = 'cuda' if cuda.is_available() else 'cpu'
-model = BERTClass()
-model.to(device)
-loss_function = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+
+
+
 training_stats = []
 
 
-def train(epoch, training_loader, valid_loader):
+def train(epoch, training_loader, valid_loader, model,optimizer):
     print("")
     print('======== Epoch {:} / {:} ========'.format(epoch + 1, EPOCHS))
     print('Training...')
@@ -158,11 +153,20 @@ if __name__ == '__main__':
                         help='path to output directory where checkpoints will be saved')"""
 
     args = parser.parse_args()
-
     train_xlsx_path = args.train_xlsx
     dev_xlsx_path = args.dev_xlsx
     test_xlsx_path = args.test_xlsx
-    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path)
+    tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
+    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, tokenizer)
+
+    device = 'cuda' if cuda.is_available() else 'cpu'
+    model = BERTClass()
+    model.to(device)
+    loss_function = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
 
     for epoch in range(EPOCHS):
-        train(epoch, training_loader, valid_loader)
+        train(epoch, training_loader, valid_loader,model,optimizer)
+    evaluate(model,test_loader)
+    df_stats = write(training_stats)
+    plot_loss(df_stats)

@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 
 
 class Radataset(Dataset):
-    def _init__(self, csv_path, tokenizer, max_len):
+    def __init__(self, csv_path, tokenizer, max_len):
         self.df = pd.read_excel(csv_path)
         self.indices = self.df.index.tolist()
         self.df["sonuc"] = self.df['sonuc']

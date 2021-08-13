@@ -1,15 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer
-from pytorch.src.dataset.labeled_data import Radataset
+import seaborn as sns
+
+from dataset.labeled_data import Radataset
 
 MAX_LEN = 128
 TRAIN_BATCH_SIZE = 16
 VALID_BATCH_SIZE = 16
 
 
-def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path):
+def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, tokenizer):
     tokenizer = BertTokenizer.from_pretrained("dbmdz/bert-base-turkish-cased")
     training_set = Radataset(train_xlsx_path, tokenizer, MAX_LEN)
     valid_set = Radataset(dev_xlsx_path, tokenizer, MAX_LEN)
@@ -29,6 +32,40 @@ def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path):
     testing_loader = DataLoader(testing_set, **train_params)
 
     return training_loader, valid_loader, testing_loader
+
+
+def write(training_stats):
+    pd.set_option('precision', 2)
+
+    # Create a DataFrame from our training statistics.
+    df_stats = pd.DataFrame(data=training_stats)
+
+    # Use the 'epoch' as the row index.
+    df_stats = df_stats.set_index('epoch')
+    df_stats.to_csv()
+    return df_stats
+
+
+def plot_loss(df_stats):
+    # Use plot styling from seaborn.
+    sns.set(style='darkgrid')
+
+    # Increase the plot size and font size.
+    sns.set(font_scale=1.5)
+    plt.rcParams["figure.figsize"] = (12, 6)
+
+    # Plot the learning curve.
+    plt.plot(df_stats['Training Loss'], 'b-o', label="Training")
+    plt.plot(df_stats['Valid. Loss'], 'g-o', label="Validation")
+
+    # Label the plot.
+    plt.title("Training & Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.xticks([1, 2, 3, 4])
+
+    plt.show()
 
 
 def plot_confusion_matrix(cm, classes,
