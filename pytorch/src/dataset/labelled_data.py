@@ -1,7 +1,6 @@
 import pandas as pd
 import torch
-from torch.utils.data import Datapset, DataLoader
-import pytorch
+from torch.utils.data import Dataset
 
 
 class Radataset(Dataset):
