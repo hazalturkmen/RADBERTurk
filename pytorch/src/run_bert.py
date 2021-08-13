@@ -1,15 +1,17 @@
 import argparse
-
 import torch
 import time
 import datetime
+
+from matplotlib import pyplot as plt
 from torch import cuda
 from transformers import BertTokenizer
-
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import numpy as np
 from pytorch.src.bert_layer import BERTClass
-MAX_LEN = 128
-TRAIN_BATCH_SIZE = 16
-VALID_BATCH_SIZE = 16
+from pytorch.src.data_utils import plot_confusion_matrix, load_data
+
+
 EPOCHS = 4
 LEARNING_RATE = 1e-05
 tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
@@ -48,14 +50,11 @@ def train(epoch, training_loader, valid_loader):
         loss = loss_function(outputs, targets)
         tr_loss += loss.item()
         big_val, big_idx = torch.max(outputs.data, dim=1)
-
         n_correct += calcuate_accu(big_idx, targets)
-
         nb_tr_steps += 1
         nb_tr_examples += targets.size(0)
         optimizer.zero_grad()
         loss.backward()
-        # # When using GPU
         optimizer.step()
 
     train_epoch_loss = tr_loss / nb_tr_steps
@@ -107,11 +106,9 @@ def train(epoch, training_loader, valid_loader):
     )
 
 
-
 def calcuate_accu(big_idx, targets):
     n_correct = (big_idx == targets).sum().item()
     return n_correct
-
 
 
 def format_time(elapsed):
@@ -120,6 +117,31 @@ def format_time(elapsed):
 
     # Format as hh:mm:ss
     return str(datetime.timedelta(seconds=elapsed_rounded))
+
+
+def evaluate(model, testing_loader):
+    y_pred = []
+    y_true = []
+
+    model.eval()
+    with torch.no_grad():
+        for _, data in enumerate(testing_loader, 0):
+            ids = data['ids'].to(device, dtype=torch.long)
+            mask = data['mask'].to(device, dtype=torch.long)
+            targets = data['targets'].to(device, dtype=torch.long)
+            output = model(ids, mask)
+            y_pred.extend(torch.argmax(output, 1).tolist())
+            y_true.extend(targets.tolist())
+
+    print('Classification Report:')
+    print(classification_report(y_true, y_pred, labels=[1, 0, 2]))
+
+    cnf_matrix = confusion_matrix(y_true, y_pred, labels=[1, 0, 2])
+    np.set_printoptions(precision=2)
+
+    plt.figure()
+    plot_confusion_matrix(cnf_matrix, classes=['VAR', 'YOK', 'SERİDIŞI'],
+                          title='Confusion matrix, without normalization')
 
 
 if __name__ == '__main__':
@@ -140,13 +162,7 @@ if __name__ == '__main__':
     train_xlsx_path = args.train_xlsx
     dev_xlsx_path = args.dev_xlsx
     test_xlsx_path = args.test_xlsx
-    tokenizer = BertTokenizer.from_pretrained("dbmdz/bert-base-turkish-cased")
-    DATA_COLUMN = 'rapor'
-    LABEL_COLUMN = 'sonuc'
+    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path)
 
     for epoch in range(EPOCHS):
         train(epoch, training_loader, valid_loader)
-
-
-
-
