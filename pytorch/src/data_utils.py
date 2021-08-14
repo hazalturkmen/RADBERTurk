@@ -50,6 +50,7 @@ def plot_loss(df_stats):
     # Use plot styling from seaborn.
     sns.set(style='darkgrid')
 
+
     # Increase the plot size and font size.
     sns.set(font_scale=1.5)
     plt.rcParams["figure.figsize"] = (12, 6)
@@ -67,6 +68,8 @@ def plot_loss(df_stats):
 
     plt.show()
 
+    fig1 = plt.figure()
+    fig1.savefig('fig1.png')
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -84,7 +87,7 @@ def plot_confusion_matrix(cm, classes,
         print('Confusion matrix, without normalization')
 
     print(cm)
-
+    #plt.figure()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
@@ -102,3 +105,5 @@ def plot_confusion_matrix(cm, classes,
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.tight_layout()
+    fig2 = plt.figure()
+    fig2.savefig('fig2.png')

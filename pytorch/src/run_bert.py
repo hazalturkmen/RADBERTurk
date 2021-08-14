@@ -1,6 +1,6 @@
 import argparse
-import torch
 import time
+import torch
 import datetime
 from matplotlib import pyplot as plt
 from torch import cuda
@@ -61,8 +61,8 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
 
     print("")
     print("Running Validation...")
-
-    t0 = time.time()
+    time.gmtime(0)
+    t1 = time.time()
     model.eval()
     tr_loss = 0
     n_correct = 0
@@ -85,7 +85,7 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
 
     val_epoch_loss = tr_loss / nb_tr_steps
     val_epoch_accu = (n_correct * 100) / nb_tr_examples
-    val_validation_time = format_time(time.time() - t0)
+    val_validation_time = format_time(time.time() - t1)
     print(f"Validation Loss Epoch: {val_epoch_loss}")
     print(f"Validation Accuracy Epoch: {val_epoch_accu}")
     print("Validation took: {:}".format(val_validation_time))
@@ -164,9 +164,15 @@ if __name__ == '__main__':
     model.to(device)
     loss_function = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
-
+    total = time.time()
     for epoch in range(EPOCHS):
         train(epoch, training_loader, valid_loader,model,optimizer)
     evaluate(model,test_loader)
+    total_train_training_time = format_time(time.time() - total)
+    print("----------------")
+    print()
+    print("Total Training time: {:}".format(total_train_training_time))
+    print()
+
     df_stats = write(training_stats)
     plot_loss(df_stats)
