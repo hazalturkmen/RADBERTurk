@@ -42,7 +42,7 @@ def write(training_stats):
 
     # Use the 'epoch' as the row index.
     df_stats = df_stats.set_index('epoch')
-    df_stats.to_csv()
+    df_stats.to_csv('stats.csv')
     return df_stats
 
 
