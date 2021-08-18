@@ -107,7 +107,7 @@ def calcuate_accu(big_idx, targets):
 
 
 def format_time(elapsed):
-    # Round to the nearest second.
+
     elapsed_rounded = int(round((elapsed)))
 
     # Format as hh:mm:ss
