@@ -1,4 +1,5 @@
 import argparse
+import os
 import time
 import torch
 import datetime
@@ -13,12 +14,10 @@ from data_utils import plot_confusion_matrix, load_data, write, plot_loss
 EPOCHS = 4
 LEARNING_RATE = 1e-05
 
-
-
 training_stats = []
 
 
-def train(epoch, training_loader, valid_loader, model,optimizer):
+def train(save_path, epoch, training_loader, valid_loader, model, optimizer):
     print("")
     print('======== Epoch {:} / {:} ========'.format(epoch + 1, EPOCHS))
     print('Training...')
@@ -27,6 +26,7 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
     nb_tr_steps = 0
     nb_tr_examples = 0
     t0 = time.time()
+    best_metric = 0.0
 
     model.train()
     for step, data in enumerate(training_loader, 0):
@@ -45,7 +45,7 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
         loss = loss_function(outputs, targets)
         tr_loss += loss.item()
         big_val, big_idx = torch.max(outputs.data, dim=1)
-        n_correct += calcuate_accu(big_idx, targets)
+        n_correct += calculate_accu(big_idx, targets)
         nb_tr_steps += 1
         nb_tr_examples += targets.size(0)
         optimizer.zero_grad()
@@ -78,7 +78,7 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
             loss = loss_function(outputs, targets)
             tr_loss += loss.item()
             big_val, big_idx = torch.max(outputs.data, dim=1)
-            n_correct += calcuate_accu(big_idx, targets)
+            n_correct += calculate_accu(big_idx, targets)
 
             nb_tr_steps += 1
             nb_tr_examples += targets.size(0)
@@ -89,6 +89,18 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
     print(f"Validation Loss Epoch: {val_epoch_loss}")
     print(f"Validation Accuracy Epoch: {val_epoch_accu}")
     print("Validation took: {:}".format(val_validation_time))
+    metric_avg = val_epoch_accu
+
+    # save the best model
+    if metric_avg > best_metric:
+        print("saving new best network!\n")
+        best_metric = metric_avg
+        path = os.path.join(save_path, "model_epoch%d" % (epoch + 1))
+        torch.save({'epoch': epoch + 1,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict()},
+                   path)
+
     training_stats.append(
         {
             'epoch': epoch + 1,
@@ -101,13 +113,12 @@ def train(epoch, training_loader, valid_loader, model,optimizer):
     )
 
 
-def calcuate_accu(big_idx, targets):
+def calculate_accu(big_idx, targets):
     n_correct = (big_idx == targets).sum().item()
     return n_correct
 
 
 def format_time(elapsed):
-
     elapsed_rounded = int(round((elapsed)))
 
     # Format as hh:mm:ss
@@ -148,14 +159,14 @@ if __name__ == '__main__':
                         help='path to xlsx containing dev reports.')
     parser.add_argument('--test_xlsx', type=str, nargs='?', required=True,
                         help='path to xlsx containing test reports.')
-
-    """parser.add_argument('--output_dir', type=str, nargs='?', required=True,
-                        help='path to output directory where checkpoints will be saved')"""
+    parser.add_argument('--output_dir', type=str, nargs='?', required=True,
+                        help='path to output directory where checkpoints will be saved')
 
     args = parser.parse_args()
     train_xlsx_path = args.train_xlsx
     dev_xlsx_path = args.dev_xlsx
     test_xlsx_path = args.test_xlsx
+    out_path = args.output_dir
     tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
     training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, tokenizer)
 
@@ -166,8 +177,8 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
     total = time.time()
     for epoch in range(EPOCHS):
-        train(epoch, training_loader, valid_loader,model,optimizer)
-    evaluate(model,test_loader)
+        train(out_path, epoch, training_loader, valid_loader, model, optimizer)
+    evaluate(model, test_loader)
     total_train_training_time = format_time(time.time() - total)
     print("----------------")
     print()
