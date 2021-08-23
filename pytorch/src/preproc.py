@@ -32,6 +32,5 @@ def preproc_files():
                 fo.write("\n")
         fo.close()
 
-
 if __name__ == '__main__':
     preproc_files()
