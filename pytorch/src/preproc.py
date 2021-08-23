@@ -11,8 +11,11 @@ def preproc(sentence):
     """
     sentence = sentence.strip()
     sentence = sentence.lower()
+    punc = '''!()-[]{};:'"\,<>./?@$%^&±*_~'''
     sentence = re.sub("[0-9]", "#", sentence)
-    sentence = re.sub(r'[^\w\s]', '', sentence)
+    for ele in sentence:
+        if ele in punc:
+            sentence = sentence.replace(ele, "")
     return sentence
 
 
@@ -24,7 +27,10 @@ def preproc_files():
         file_contents = f_txt.read()
         contents_split = file_contents.splitlines()
         for sent in contents_split:
-            preproc(sent)
+            with open(f.replace('splitted_txt_2', 'splitted_txt_processed'), 'a') as fo:
+                fo.write(preproc(sent))
+                fo.write("\n")
+        fo.close()
 
 
 if __name__ == '__main__':
