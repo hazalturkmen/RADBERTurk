@@ -22,15 +22,16 @@ def preproc(sentence):
 def preproc_files():
     files = glob.glob("/home/hazal/nlp_dataset/brain_CT/splitted_txt_2/*.txt")
     print("\nPre-processing medical text...")
-    for f in tqdm(files):
-        f_txt = open(f, "r")
-        file_contents = f_txt.read()
-        contents_split = file_contents.splitlines()
-        for sent in contents_split:
-            with open(f.replace('splitted_txt_2', 'splitted_txt_processed'), 'a') as fo:
+    with open('/home/hazal/nlp_dataset/brain_CT/tr_medical_processed', 'w') as fo:
+        for f in tqdm(files):
+            f_txt = open(f, "r")
+            file_contents = f_txt.read()
+            contents_split = file_contents.splitlines()
+            for sent in contents_split:
                 fo.write(preproc(sent))
                 fo.write("\n")
-        fo.close()
+    fo.close()
+
 
 if __name__ == '__main__':
     preproc_files()
