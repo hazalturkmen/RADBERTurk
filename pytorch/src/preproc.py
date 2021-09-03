@@ -7,10 +7,10 @@ def preproc(sentence):
     """
 
     :param sentence:
-    :return:
+    :return:sentece
     """
     sentence = sentence.strip()
-    sentence = sentence.lower()
+    #sentence = sentence.lower()
     punc = '''!()-[]{};:'"\,<>./?@$%^&±*_~'''
     sentence = re.sub("[0-9]", "#", sentence)
     for ele in sentence:
