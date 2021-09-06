@@ -8,7 +8,7 @@ from torch import cuda
 from transformers import BertTokenizer
 from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
-from bert_layer import BERTClass
+from bert_layer import BertClass
 from data_utils import plot_confusion_matrix, load_data, write, plot_loss
 
 EPOCHS = 4
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, tokenizer)
 
     device = 'cuda' if cuda.is_available() else 'cpu'
-    model = BERTClass()
+    model = BertClass(freeze_bert=False)
     model.to(device)
     loss_function = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
