@@ -4,7 +4,7 @@ from transformers import BertModel
 
 class BertClass(torch.nn.Module):
 
-    def __init__(self, freeze_bert=False):
+    def __init__(self, freeze_bert=True):
         super(BertClass, self).__init__()
         # Specify hidden size of BERT, hidden size of our classifier, and number of labels
         D_in, H, D_out = 768, 50, 3

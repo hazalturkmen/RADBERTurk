@@ -4,7 +4,6 @@ import pandas as pd
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer
 import seaborn as sns
-from sklearn.metrics import accuracy_score, roc_curve, auc
 from dataset.labeled_data import Radataset
 
 MAX_LEN = 128
@@ -12,7 +11,7 @@ TRAIN_BATCH_SIZE = 16
 VALID_BATCH_SIZE = 16
 
 
-def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, tokenizer):
+def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path):
     tokenizer = BertTokenizer.from_pretrained("dbmdz/bert-base-turkish-cased")
     training_set = Radataset(train_xlsx_path, tokenizer, MAX_LEN)
     valid_set = Radataset(dev_xlsx_path, tokenizer, MAX_LEN)

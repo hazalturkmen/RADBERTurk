@@ -5,19 +5,45 @@ import torch
 import datetime
 from matplotlib import pyplot as plt
 from torch import cuda
-from transformers import BertTokenizer
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import numpy as np
 from bert_layer import BertClass
 from data_utils import plot_confusion_matrix, load_data, write, plot_loss
+from transformers import AdamW, get_linear_schedule_with_warmup
 
-EPOCHS = 4
-LEARNING_RATE = 1e-05
-
+EPOCHS = 8
 training_stats = []
 
 
-def train(save_path, epoch, training_loader, valid_loader, model, optimizer):
+def initialize_model(epochs, train_data):
+    """Initialize the Bert Classifier, the optimizer the learning rate scheduler and the loss function.
+    """
+    # Instantiate Bert Classifier
+    bert_classifier = BertClass(freeze_bert=True)
+
+    # Tell PyTorch to run the model on GPU
+    bert_classifier.to(device)
+
+    # Create the optimizer
+    optimizer = AdamW(bert_classifier.parameters(),
+                      lr=5e-5,  # Default learning rate
+                      eps=1e-8  # Default epsilon value
+                      )
+
+    # Total number of training steps
+    total_steps = len(train_data) * epochs
+
+    # Loss function for multiclass text classifier
+    loss_function = torch.nn.CrossEntropyLoss()
+
+    # Set up the learning rate scheduler
+    scheduler = get_linear_schedule_with_warmup(optimizer,
+                                                num_warmup_steps=0,  # Default value
+                                                num_training_steps=total_steps)
+    return bert_classifier, optimizer, scheduler, loss_function
+
+
+def train(save_path, epoch, training_loader, valid_loader, model, optimizer, scheduler):
     print("")
     print('======== Epoch {:} / {:} ========'.format(epoch + 1, EPOCHS))
     print('Training...')
@@ -31,7 +57,7 @@ def train(save_path, epoch, training_loader, valid_loader, model, optimizer):
     model.train()
     for step, data in enumerate(training_loader, 0):
 
-        if step % 40 == 0 and not step == 0:
+        if (step % 10 == 0 and not step == 0) or (step == len(training_loader) - 1):
             elapsed = format_time(time.time() - t0)
 
             # Report progress.
@@ -50,7 +76,10 @@ def train(save_path, epoch, training_loader, valid_loader, model, optimizer):
         nb_tr_examples += targets.size(0)
         optimizer.zero_grad()
         loss.backward()
+        # Clip the norm of the gradients to 1.0 to prevent "exploding gradients"
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
+        scheduler.step()
 
     train_epoch_loss = tr_loss / nb_tr_steps
     train_epoch_accu = (n_correct * 100) / nb_tr_examples
@@ -119,7 +148,7 @@ def calculate_accu(big_idx, targets):
 
 
 def format_time(elapsed):
-    elapsed_rounded = int(round((elapsed)))
+    elapsed_rounded = int(round(elapsed))
 
     # Format as hh:mm:ss
     return str(datetime.timedelta(seconds=elapsed_rounded))
@@ -138,6 +167,10 @@ def evaluate(model, testing_loader):
             output = model(ids, mask)
             y_pred.extend(torch.argmax(output, 1).tolist())
             y_true.extend(targets.tolist())
+
+    accuracy = accuracy_score(y_true, y_pred)
+    print(f'Accuracy: {accuracy * 100:.2f}%')
+
 
     print('Classification Report:')
     print(classification_report(y_true, y_pred, labels=[1, 0, 2]))
@@ -167,23 +200,24 @@ if __name__ == '__main__':
     dev_xlsx_path = args.dev_xlsx
     test_xlsx_path = args.test_xlsx
     out_path = args.output_dir
-    tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
-    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, tokenizer)
-
+    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path)
+    # device
     device = 'cuda' if cuda.is_available() else 'cpu'
-    model = BertClass(freeze_bert=False)
-    model.to(device)
-    loss_function = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+    # initialize model
+    bert_classifier, optimizer, scheduler, loss_function = initialize_model(EPOCHS, training_loader)
+    # start total training time
     total = time.time()
+    # Training loop
     for epoch in range(EPOCHS):
-        train(out_path, epoch, training_loader, valid_loader, model, optimizer)
-    evaluate(model, test_loader)
+        train(out_path, epoch, training_loader, valid_loader, bert_classifier, optimizer, scheduler)
+    # Evaluate model
+    evaluate(bert_classifier, test_loader)
+    # Calculate total training time
     total_train_training_time = format_time(time.time() - total)
     print("----------------")
     print()
     print("Total Training time: {:}".format(total_train_training_time))
     print()
-
+    # print stats and loss
     df_stats = write(training_stats)
     plot_loss(df_stats)
