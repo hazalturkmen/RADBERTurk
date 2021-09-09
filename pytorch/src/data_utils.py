@@ -6,22 +6,18 @@ from transformers import BertTokenizer
 import seaborn as sns
 from dataset.labeled_data import Radataset
 
-MAX_LEN = 128
-TRAIN_BATCH_SIZE = 16
-VALID_BATCH_SIZE = 16
 
-
-def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path):
+def load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, config):
     tokenizer = BertTokenizer.from_pretrained("dbmdz/bert-base-turkish-cased")
-    training_set = Radataset(train_xlsx_path, tokenizer, MAX_LEN)
-    valid_set = Radataset(dev_xlsx_path, tokenizer, MAX_LEN)
-    testing_set = Radataset(test_xlsx_path, tokenizer, MAX_LEN)
+    training_set = Radataset(train_xlsx_path, tokenizer, config.max_length)
+    valid_set = Radataset(dev_xlsx_path, tokenizer, config.max_length)
+    testing_set = Radataset(test_xlsx_path, tokenizer, config.max_length)
 
     print("TRAIN Dataset: {}".format(training_set.data.shape))
     print("VALID Dataset: {}".format(valid_set.data.shape))
     print("TEST Dataset: {}".format(testing_set.data.shape))
 
-    train_params = {'batch_size': TRAIN_BATCH_SIZE,
+    train_params = {'batch_size': config.batch_size,
                     'shuffle': True,
                     'num_workers': 0
                     }
@@ -49,7 +45,6 @@ def plot_loss(df_stats):
     # Use plot styling from seaborn.
     sns.set(style='darkgrid')
 
-
     # Increase the plot size and font size.
     sns.set(font_scale=1.5)
     plt.rcParams["figure.figsize"] = (12, 6)
@@ -70,6 +65,7 @@ def plot_loss(df_stats):
     fig1 = plt.figure()
     fig1.savefig('fig1.png')
 
+
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion matrix',
@@ -86,7 +82,7 @@ def plot_confusion_matrix(cm, classes,
         print('Confusion matrix, without normalization')
 
     print(cm)
-    #plt.figure()
+    # plt.figure()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()

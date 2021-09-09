@@ -11,22 +11,23 @@ from bert_layer import BertClass
 from data_utils import plot_confusion_matrix, load_data, write, plot_loss
 from transformers import AdamW, get_linear_schedule_with_warmup
 
-EPOCHS = 8
+from config import process_config
+
+
 training_stats = []
 
 
-def initialize_model(epochs, train_data):
+def initialize_model(epochs, train_data, lr):
     """Initialize the Bert Classifier, the optimizer the learning rate scheduler and the loss function.
     """
-    # Instantiate Bert Classifier
-    bert_classifier = BertClass(freeze_bert=True)
 
-    # Tell PyTorch to run the model on GPU
+    bert_classifier = BertClass(freeze_bert=False)
+
     bert_classifier.to(device)
 
     # Create the optimizer
     optimizer = AdamW(bert_classifier.parameters(),
-                      lr=5e-5,  # Default learning rate
+                      lr=lr,  # Default learning rate
                       eps=1e-8  # Default epsilon value
                       )
 
@@ -43,9 +44,9 @@ def initialize_model(epochs, train_data):
     return bert_classifier, optimizer, scheduler, loss_function
 
 
-def train(save_path, epoch, training_loader, valid_loader, model, optimizer, scheduler):
+def train(save_path, epoch, training_loader, valid_loader, model, optimizer, scheduler, total_epoch):
     print("")
-    print('======== Epoch {:} / {:} ========'.format(epoch + 1, EPOCHS))
+    print('======== Epoch {:} / {:} ========'.format(epoch +1, total_epoch))
     print('Training...')
     tr_loss = 0
     n_correct = 0
@@ -171,7 +172,6 @@ def evaluate(model, testing_loader):
     accuracy = accuracy_score(y_true, y_pred)
     print(f'Accuracy: {accuracy * 100:.2f}%')
 
-
     print('Classification Report:')
     print(classification_report(y_true, y_pred, labels=[1, 0, 2]))
 
@@ -194,22 +194,29 @@ if __name__ == '__main__':
                         help='path to xlsx containing test reports.')
     parser.add_argument('--output_dir', type=str, nargs='?', required=True,
                         help='path to output directory where checkpoints will be saved')
+    parser.add_argument('--config_json', type=str, nargs='?', required=True,
+                        help='path to config containing training parameters')
 
     args = parser.parse_args()
     train_xlsx_path = args.train_xlsx
     dev_xlsx_path = args.dev_xlsx
     test_xlsx_path = args.test_xlsx
     out_path = args.output_dir
-    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path)
+    config_path = args.config_json
+
+    config = process_config(config_path)
+    training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, config)
+
+
     # device
     device = 'cuda' if cuda.is_available() else 'cpu'
     # initialize model
-    bert_classifier, optimizer, scheduler, loss_function = initialize_model(EPOCHS, training_loader)
+    bert_classifier, optimizer, scheduler, loss_function = initialize_model(config.num_epochs, training_loader, config.learning_rate)
     # start total training time
     total = time.time()
     # Training loop
-    for epoch in range(EPOCHS):
-        train(out_path, epoch, training_loader, valid_loader, bert_classifier, optimizer, scheduler)
+    for epoch in range(config.num_epochs):
+        train(out_path, epoch, training_loader, valid_loader, bert_classifier, optimizer, scheduler, config.num_epochs)
     # Evaluate model
     evaluate(bert_classifier, test_loader)
     # Calculate total training time
