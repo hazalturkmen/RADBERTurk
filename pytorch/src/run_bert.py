@@ -210,14 +210,8 @@ if __name__ == '__main__':
 
     config = process_config(config_path)
     training_loader, valid_loader, test_loader = load_data(train_xlsx_path, dev_xlsx_path, test_xlsx_path, config)
-
-
     # device
     device = 'cuda' if cuda.is_available() else 'cpu'
-
-
-
-
     # initialize model
     bert_classifier, optimizer, scheduler, loss_function = initialize_model(config.num_epochs, training_loader, config.learning_rate)
     # start total training time
