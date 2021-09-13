@@ -10,7 +10,7 @@ import numpy as np
 from bert_layer import BertClass
 from data_utils import plot_confusion_matrix, load_data, write, plot_loss
 from transformers import AdamW, get_linear_schedule_with_warmup
-
+import torch.nn as nn
 from config import process_config
 
 
@@ -23,6 +23,10 @@ def initialize_model(epochs, train_data, lr):
 
     bert_classifier = BertClass(freeze_bert=False)
 
+    # to utilize multiple GPU's
+    if torch.cuda.device_count() > 1:
+        print("Using", torch.cuda.device_count(), "GPUs!")
+        bert_classifier = nn.DataParallel(bert_classifier)
     bert_classifier.to(device)
 
     # Create the optimizer
@@ -210,6 +214,10 @@ if __name__ == '__main__':
 
     # device
     device = 'cuda' if cuda.is_available() else 'cpu'
+
+
+
+
     # initialize model
     bert_classifier, optimizer, scheduler, loss_function = initialize_model(config.num_epochs, training_loader, config.learning_rate)
     # start total training time
