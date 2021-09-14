@@ -13,7 +13,6 @@ from transformers import AdamW, get_linear_schedule_with_warmup
 import torch.nn as nn
 from config import process_config
 
-
 training_stats = []
 
 
@@ -31,7 +30,7 @@ def initialize_model(epochs, train_data, lr):
 
     # Create the optimizer
     optimizer = AdamW(bert_classifier.parameters(),
-                      lr=lr,  # Default learning rate
+                      lr=lr,
                       eps=1e-8  # Default epsilon value
                       )
 
@@ -45,12 +44,18 @@ def initialize_model(epochs, train_data, lr):
     scheduler = get_linear_schedule_with_warmup(optimizer,
                                                 num_warmup_steps=0,  # Default value
                                                 num_training_steps=total_steps)
+    if "checkpoints":
+        model_state, optimizer_state = torch.load(
+            os.path.join("checkpoints", "checkpoint"))
+        bert_classifier.load_state_dict(model_state)
+        optimizer.load_state_dict(optimizer_state)
+
     return bert_classifier, optimizer, scheduler, loss_function
 
 
 def train(save_path, epoch, training_loader, valid_loader, model, optimizer, scheduler, total_epoch):
     print("")
-    print('======== Epoch {:} / {:} ========'.format(epoch +1, total_epoch))
+    print('======== Epoch {:} / {:} ========'.format(epoch + 1, total_epoch))
     print('Training...')
     tr_loss = 0
     n_correct = 0
@@ -213,9 +218,11 @@ if __name__ == '__main__':
     # device
     device = 'cuda' if cuda.is_available() else 'cpu'
     # initialize model
-    bert_classifier, optimizer, scheduler, loss_function = initialize_model(config.num_epochs, training_loader, config.learning_rate)
+    bert_classifier, optimizer, scheduler, loss_function = initialize_model(config.num_epochs, training_loader,
+                                                                            config.learning_rate)
     # start total training time
     total = time.time()
+
     # Training loop
     for epoch in range(config.num_epochs):
         train(out_path, epoch, training_loader, valid_loader, bert_classifier, optimizer, scheduler, config.num_epochs)
