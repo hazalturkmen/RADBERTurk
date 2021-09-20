@@ -8,20 +8,26 @@ from transformers import LineByLineTextDataset
 from transformers import DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments
 
+
 def format_time(elapsed):
-    elapsed_rounded = int(round((elapsed)))
+    elapsed_rounded = int(round(elapsed))
     return str(datetime.timedelta(seconds=elapsed_rounded))
+
 
 print("Is cuda available?")
 print(torch.cuda.is_available())
 print("----------------------------")
 
 config = BertConfig(
-    vocab_size=52_000,
+    vocab_size=32_000,
     max_position_embeddings=514,
     num_attention_heads=12,
-    num_hidden_layers=6,
+    num_hidden_layers=12,
     type_vocab_size=1,
+    attention_probs_dropout_prob=0.1,
+    hidden_act="gelu",
+    hidden_dropout_prob=0.1,
+    hidden_size=768
 )
 
 tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
@@ -37,7 +43,7 @@ data_collator = DataCollatorForLanguageModeling(
 )
 
 training_args = TrainingArguments(
-    output_dir="./trmedicalBERT",
+    output_dir="./BioBERTRcased",
     overwrite_output_dir=True,
     num_train_epochs=3,
     per_gpu_train_batch_size=64,
@@ -59,6 +65,6 @@ print("Training is started...")
 total = time.time()
 trainer.train()
 total_train_training_time = format_time(time.time() - total)
-print("/n Total training time = "+total_train_training_time)
+print("/n Total training time = " + total_train_training_time)
 print("Model is saved...")
 trainer.save_model("./trmedicalBERT")
