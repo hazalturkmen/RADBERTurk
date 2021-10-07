@@ -33,5 +33,19 @@ def preproc_files():
     fo.close()
 
 
+def preproc_single_file():
+    print("\nPre-processing medical text...")
+    with open('/home/hazal/nlp_dataset/brain_CT/tr_medical_data/tr_articles_processed.txt', 'w') as fo:
+        f_txt = open("/home/hazal/nlp_dataset/brain_CT/tr_medical_data/tr_articles_2.txt", "r")
+        file_contents = f_txt.read()
+        contents_split = file_contents.splitlines()
+        for sent in contents_split:
+            fo.write(preproc(sent))
+            fo.write("\n")
+    fo.close()
+    f_txt.close()
+
+
+
 if __name__ == '__main__':
-    preproc_files()
+    preproc_single_file()

@@ -30,7 +30,7 @@ config = BertConfig(
     hidden_size=768
 )
 
-tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased')
+tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased', do_lower_case=False)
 model = BertForMaskedLM(config=config)
 dataset = LineByLineTextDataset(
     tokenizer=tokenizer,
