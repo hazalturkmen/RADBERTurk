@@ -5,3 +5,5 @@ TurkRADBERT is a deep learning based system for labeling Turkish BT radiology re
 Positive: 1
 Negative: 0
 Uncertain: 2
+
+Bert models and data will be shared...
