@@ -8,6 +8,7 @@ from transformers import LineByLineTextDataset
 from transformers import DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def format_time(elapsed):
     elapsed_rounded = int(round(elapsed))
@@ -20,10 +21,10 @@ print("----------------------------")
 
 config = BertConfig(
     vocab_size=32_000,
-    max_position_embeddings=514,
+    max_position_embeddings=512,
     num_attention_heads=12,
     num_hidden_layers=12,
-    type_vocab_size=1,
+    type_vocab_size=2,
     attention_probs_dropout_prob=0.1,
     hidden_act="gelu",
     hidden_dropout_prob=0.1,
@@ -31,10 +32,10 @@ config = BertConfig(
 )
 
 tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-turkish-cased', do_lower_case=False)
-model = BertForMaskedLM(config=config)
+model = BertForMaskedLM.from_pretrained('dbmdz/bert-base-turkish-cased').to(device)
 dataset = LineByLineTextDataset(
     tokenizer=tokenizer,
-    file_path="/home/hazal/nlp_dataset/brain_CT/tr_medical_processed.txt",
+    file_path="/home/hazal/nlp_dataset/brain_CT/example/tr_medical_300.txt",
     block_size=512,
 )
 
@@ -46,7 +47,7 @@ training_args = TrainingArguments(
     output_dir="./BioBERTRcased",
     overwrite_output_dir=True,
     num_train_epochs=3,
-    per_gpu_train_batch_size=64,
+    per_gpu_train_batch_size=8,
     save_steps=10_000,
     save_total_limit=2,
     prediction_loss_only=True,
