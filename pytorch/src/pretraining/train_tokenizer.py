@@ -28,7 +28,7 @@ tokenizer_uncased = BertWordPieceTokenizer(
 )
 
 trainer_uncased = tokenizer_uncased.train(
-    "tr_final",
+    "/home/hazal/nlp_dataset/corpus/all.txt",
     vocab_size=32000,
     min_frequency=2,
     show_progress=True,
